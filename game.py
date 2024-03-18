@@ -153,6 +153,9 @@ class Game:
         while True:
 
             self.display.fill((0,0,0))
+            self.display.blit(self.assets['background'], (0,0))
+            self.clouds.update()
+            self.clouds.render(self.display)
             self.button1.draw("game")
             self.button2.draw("option")
             # self.draw_text('main menu', self.font, (255, 255, 255), 20, 20)
@@ -189,6 +192,9 @@ class Game:
         self.running = True
         while self.running:
             self.display.fill((0,0,0))
+            self.display.blit(self.assets['background'], (0,0))
+            self.clouds.update()
+            self.clouds.render(self.display)
             # self.button3.draw("resolution", [self.list1])
             self.button4.draw("controls", [self.list1])
 
