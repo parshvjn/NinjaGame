@@ -25,10 +25,11 @@ class DropDown():
                 pygame.draw.rect(surf, self.color_option[1 if i == self.active_option else 0], rect, 0)
                 msg = self.font.render(text, 1, (0, 0, 0))
                 surf.blit(msg, msg.get_rect(center = rect.center))
+            print('menu')
 
     def update(self, event_list):
         mpos = pygame.mouse.get_pos()
-        self.menu_active = self.rect.collidepoint(mpos)
+        self.menu_active = self.rect.collidepoint(mpos) # use this to fix coords with game
         
         self.active_option = -1
         for i in range(len(self.options)):
@@ -64,13 +65,14 @@ list1 = DropDown(
     [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
     50, 50, 200, 50, 
     pygame.font.SysFont(None, 30), 
-    "Select Mode", ["#1", "#2"])
+    "Resolution", ["1", "#"])
 
 run = True
 while run:
     clock.tick(30)
 
     event_list = pygame.event.get()
+    print(event_list)
     for event in event_list:
         if event.type == pygame.QUIT:
             run = False
@@ -80,6 +82,7 @@ while run:
         list1.main = list1.options[selected_option]
         if list1.options[selected_option] == "#1":
             print('yes sir')
+        # print(selected_option)
 
     screen.fill((255, 255, 255))
     list1.draw(screen)

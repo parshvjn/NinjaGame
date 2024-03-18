@@ -24,7 +24,7 @@ class Button:
 		self.text_surf = self.font.render(text,True,'#FFFFFF')
 		self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)
 
-	def draw(self, nameType = None):
+	def draw(self, nameType = None, dropdowns = []):
 		# elevation logic 
 		self.top_rect.y = self.original_y_pos - self.dynamic_elecation
 		self.text_rect.center = self.top_rect.center 
@@ -32,14 +32,21 @@ class Button:
 		self.bottom_rect.midtop = self.top_rect.midtop
 		self.bottom_rect.height = self.top_rect.height + self.dynamic_elecation
 
+		for dropdown in dropdowns:
+			if dropdown.menu_open:
+				self.bottom_rect[1] += len(dropdown.options) * (dropdown.rect[3]+2)
+				self.top_rect[1] += len(dropdown.options) * (dropdown.rect[3]+2)
+				self.text_rect[1] += len(dropdown.options) * (dropdown.rect[3]+2)
 		pygame.draw.rect(self.display,self.bottom_color, self.bottom_rect,border_radius = 12)
 		pygame.draw.rect(self.display,self.top_color, self.top_rect,border_radius = 12)
 		self.display.blit(self.text_surf, self.text_rect)
-		self.check_click(nameType)
+		if self.game.fullScreen:
+			self.check_click(nameType, self.game.monitor_size)
+		else:
+			self.check_click(nameType, (self.game.screenX, self.game.screenY))
 
-	def check_click(self, nameType):
-		mouse_pos = pygame.mouse.get_pos()
-		if self.top_rect.collidepoint((mouse_pos[0]/6, mouse_pos[1]/5.75)):
+	def check_click(self, nameType, resolution):
+		if self.top_rect.collidepoint((pygame.mouse.get_pos()[0]/(resolution[0]/320), pygame.mouse.get_pos()[1]/(resolution[1]/240))):
 			self.top_color = '#D74B4B'
 			if pygame.mouse.get_pressed()[0]:
 				self.dynamic_elecation = 0

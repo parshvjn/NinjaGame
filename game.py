@@ -10,6 +10,7 @@ import scripts.cloth as cloth1
 import random, math, os
 import scripts.grass as grass
 from scripts.button import Button
+from scripts.drop_down import DropDown
 
 class Game:
     def __init__(self):
@@ -23,7 +24,11 @@ class Game:
         self.font_size = 10
         self.font = pygame.font.SysFont("Futura", self.font_size)
 
-        self.screen = pygame.display.set_mode((1920, 1380)) # Keep proportion of sizes. Examples: (1280, 960), (640, 480), (1920, 1380)
+        self.monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
+        self.screenX = 1920
+        self.screenY = 1380
+        self.screen = pygame.display.set_mode((self.screenX, self.screenY)) # Keep proportion of sizes. Examples: (1280, 960), (640, 480), (1920, 1380)
+        self.fullScreen = False
         #so now with the line below you can use display instead of screen too
         self.display = pygame.Surface((320,240), pygame.SRCALPHA) # .surface() makes new black surface like window(like just a black img), scralpha tells the surface to add a transparency channel so it can be transparent
         self.display2 = pygame.Surface((320,240))
@@ -91,7 +96,17 @@ class Game:
         self.button1 = Button('Game',70,25,(10,20),5, self.font, self.display, self)
         self.button2 = Button('Options',70,25,(10,55),5, self.font, self.display, self)
         self.button3 = Button('Resolution',70,25,(10,20),5, self.font, self.display, self)
-        self.button4 = Button('Controls',70,25,(10,55),5, self.font, self.display, self)
+        self.button4 = Button('Controls',70,25,(10,45),5, self.font, self.display, self)
+        COLOR_INACTIVE = "#475F77"
+        COLOR_ACTIVE = "#D74B4B"
+        COLOR_LIST_INACTIVE = "#354B5E"
+        COLOR_LIST_ACTIVE = "#D74B4B"
+        self.list1 = DropDown(
+            [COLOR_INACTIVE, COLOR_ACTIVE],
+            [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
+            10, 10, 70, 25, 
+            self.font, 
+            "1920x1380", ["1920x1380", "1280x960", "640x480"], self)
         
 
 
@@ -151,9 +166,18 @@ class Game:
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         sys.exit()
+                    if event.key == pygame.K_f:
+                        self.fullScreen = not self.fullScreen
+                        if self.fullScreen:
+                            self.screen = pygame.display.set_mode(self.monitor_size, pygame.FULLSCREEN)
+                            self.list1.main = "FullScreen"
+                        else:
+                            self.screen = pygame.display.set_mode((self.screenX, self.screenY))
+                            self.list1.main = str(self.screenX) + "x" + str(self.screenY)
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         click = True
+
 
             self.display2.blit(self.display, (0,0)) # comment this for ninja mode :)
             screenShakeOffset = (random.random() * self.screenShake - self.screenShake*2, random.random() * self.screenShake - self.screenShake*2)
@@ -165,8 +189,8 @@ class Game:
         self.running = True
         while self.running:
             self.display.fill((0,0,0))
-            self.button3.draw("resolution")
-            self.button4.draw("controls")
+            # self.button3.draw("resolution", [self.list1])
+            self.button4.draw("controls", [self.list1])
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -175,7 +199,36 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
+                    if event.key == pygame.K_f:
+                        self.fullScreen = not self.fullScreen
+                        if self.fullScreen:
+                            self.screen = pygame.display.set_mode(self.monitor_size, pygame.FULLSCREEN)
+                            self.list1.main = "FullScreen"
+                        else:
+                            self.screen = pygame.display.set_mode((self.screenX, self.screenY))
+                            self.list1.main = str(self.screenX) + "x" + str(self.screenY)
+
+                selectedOption = self.list1.update(event, (self.screenX, self.screenY))
+                if selectedOption >= 0:
+                    self.list1.main = self.list1.options[selectedOption]
+                    if self.list1.options[selectedOption] == "1280x960": # (320,240)
+                        self.screenX, self.screenY = 1280, 960
+                        self.screen = pygame.display.set_mode((self.screenX, self.screenY))
+                        self.fullScreen = False
+                    elif self.list1.options[selectedOption] == "1920x1380":
+                        self.screenX, self.screenY = 1920, 1380
+                        self.screen = pygame.display.set_mode((self.screenX, self.screenY))
+                        self.fullScreen = False
+                    elif self.list1.options[selectedOption] == "640x480":
+                        self.screenX, self.screenY = 640, 480
+                        self.screen = pygame.display.set_mode((self.screenX, self.screenY))
+                        self.fullScreen = False
+                
+            # print(eventList)
+            # selectedOption = self.list1.update(eventList)
             
+            self.list1.draw(self.display)
+
             self.display2.blit(self.display, (0,0)) # comment this for ninja mode :)
             screenShakeOffset = (random.random() * self.screenShake - self.screenShake*2, random.random() * self.screenShake - self.screenShake*2)
             self.screen.blit(pygame.transform.scale(self.display2, self.screen.get_size()), screenShakeOffset) # displaying the surface which you put everything on, onto the original screen and scaling the surface to the scrren's size
@@ -391,6 +444,14 @@ class Game:
                             self.keyboard = False
                         else:
                             self.keyboard = True
+                    if event.key == pygame.K_f:
+                        self.fullScreen = not self.fullScreen
+                        if self.fullScreen:
+                            self.screen = pygame.display.set_mode(self.monitor_size, pygame.FULLSCREEN)
+                            self.list1.main = "FullScreen"
+                        else:
+                            self.screen = pygame.display.set_mode((self.screenX, self.screenY))
+                            self.list1.main = str(self.screenX) + "x" + str(self.screenY)
                 if event.type == pygame.KEYUP and self.keyboard:
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = False

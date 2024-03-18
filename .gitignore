@@ -1,2 +1,3 @@
+# files that will be ignored
 .DS_Store
 __pycache__
