@@ -1,4 +1,5 @@
 import pygame
+from pygame_emojis import load_emoji
 import sys, time
 from scripts.utils import load_image, load_images, Animation
 from scripts.entities import PhysicsEntity, Player, Enemy
@@ -9,6 +10,7 @@ from scripts.spark import Spark
 import scripts.cloth as cloth1
 import random, math, os
 import scripts.grass as grass
+from scripts.emoji import EmojiMain
 from scripts.button import Button
 from scripts.drop_down import DropDown
 
@@ -17,7 +19,7 @@ class Game:
         pygame.init()
         pygame.joystick.init()
 
-        pygame.display.set_caption("Platformer")
+        pygame.display.set_caption("Ninja Game")
         
         self.keyboard = True
 
@@ -25,8 +27,8 @@ class Game:
         self.font = pygame.font.SysFont("Futura", self.font_size)
 
         self.monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
-        self.screenX = 1920
-        self.screenY = 1380
+        self.screenX = 640
+        self.screenY = 480
         self.screen = pygame.display.set_mode((self.screenX, self.screenY)) # Keep proportion of sizes. Examples: (1280, 960), (640, 480), (1920, 1380)
         self.fullScreen = False
         #so now with the line below you can use display instead of screen too
@@ -63,6 +65,7 @@ class Game:
             'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop = False),
             'gun': load_image('gun.png'),
             'projectile': load_image('projectile.png'),
+            'emojis': load_images('emojis', scaleFactor=0.75)
         }
 
         self.sfx = {
@@ -97,6 +100,8 @@ class Game:
         self.button2 = Button('Options',70,25,(10,55),5, self.font, self.display, self)
         self.button3 = Button('Resolution',70,25,(10,20),5, self.font, self.display, self)
         self.button4 = Button('Controls',70,25,(10,45),5, self.font, self.display, self)
+        self.button5 = Button('Extra',70,25,(10,80),5, self.font, self.display, self)
+        self.emoji = load_emoji('↕', (12,12))
         COLOR_INACTIVE = "#475F77"
         COLOR_ACTIVE = "#D74B4B"
         COLOR_LIST_INACTIVE = "#354B5E"
@@ -104,9 +109,28 @@ class Game:
         self.list1 = DropDown(
             [COLOR_INACTIVE, COLOR_ACTIVE],
             [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
-            10, 10, 70, 25, 
+            10, 10, 80, 25, 
             self.font, 
-            "1920x1380", ["1920x1380", "1280x960", "640x480"], self)
+            "640x480", ["1920x1380", "1280x960", "640x480"], self)
+        self.list2 = DropDown(
+            [COLOR_INACTIVE, COLOR_ACTIVE],
+            [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
+            10, 10, 80, 25, 
+            self.font, 
+            "Normal", ["Normal", "Color1", "Color2"], self)
+        self.color = "Normal"
+        self.cursorDrop = DropDown(
+            [COLOR_INACTIVE, COLOR_ACTIVE],
+            [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
+            10, 40, 80, 25, 
+            self.font,
+            "Arrow", ["Arrow", "diamond", "broken_x", "thick arrow"], self)
+        
+        # pygame.mouse.set_visible(False)
+        pygame.mouse.set_cursor(pygame.cursors.Cursor(*pygame.cursors.arrow))
+
+        self.emojisManager = EmojiMain(self.assets['emojis'], self.display, self)
+
         
 
 
@@ -188,15 +212,67 @@ class Game:
             pygame.display.update()
             self.clock.tick(60)
 
+    def extra(self):
+        self.running1 = True
+        while self.running1:
+            self.display.fill((0,0,0))
+            self.display.blit(self.assets['background'], (0,0))
+            self.clouds.update()
+            self.clouds.render(self.display)
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running1 = False
+                    if event.key == pygame.K_f:
+                        self.fullScreen = not self.fullScreen
+                        if self.fullScreen:
+                            self.screen = pygame.display.set_mode(self.monitor_size, pygame.FULLSCREEN)
+                            self.list1.main = "FullScreen"
+                        else:
+                            self.screen = pygame.display.set_mode((self.screenX, self.screenY))
+                            self.list1.main = str(self.screenX) + "x" + str(self.screenY)
+
+                selectedOption = self.list2.update(event, (self.screenX, self.screenY))
+                if selectedOption >= 0:
+                    self.list2.main = self.list2.options[selectedOption]
+                    self.color = self.list2.options[selectedOption]
+                selectedOption = self.cursorDrop.update(event, (self.screenX, self.screenY))
+                if selectedOption >= 0:
+                    self.cursorDrop.main = self.cursorDrop.options[selectedOption]
+                    if self.cursorDrop.options[selectedOption] == "Arrow":
+                        pygame.mouse.set_cursor(pygame.cursors.Cursor(*pygame.cursors.arrow))
+                    elif self.cursorDrop.options[selectedOption] == "diamond":
+                        pygame.mouse.set_cursor(pygame.cursors.Cursor(*pygame.cursors.diamond))
+                    elif self.cursorDrop.options[selectedOption] == "broken_x":
+                        pygame.mouse.set_cursor(pygame.cursors.Cursor(*pygame.cursors.broken_x))
+                    elif self.cursorDrop.options[selectedOption] == "thick arrow":
+                        self.cursor = pygame.cursors.compile(pygame.cursors.thickarrow_strings)
+                        pygame.mouse.set_cursor((24, 24), (0, 0), *self.cursor)
+                    
+            self.list2.draw(self.display)
+            self.cursorDrop.draw(self.display, [self.list2])
+
+            self.display2.blit(self.display, (0,0)) # comment this for ninja mode :)
+            screenShakeOffset = (random.random() * self.screenShake - self.screenShake*2, random.random() * self.screenShake - self.screenShake*2)
+            self.screen.blit(pygame.transform.scale(self.display2, self.screen.get_size()), screenShakeOffset) # displaying the surface which you put everything on, onto the original screen and scaling the surface to the scrren's size
+            pygame.display.update()
+            self.clock.tick(60)
+
     def options(self):
         self.running = True
-        while self.running:
+        self.running1 = False
+        while self.running and self.running1 == False:
             self.display.fill((0,0,0))
             self.display.blit(self.assets['background'], (0,0))
             self.clouds.update()
             self.clouds.render(self.display)
             # self.button3.draw("resolution", [self.list1])
             self.button4.draw("controls", [self.list1])
+            self.button5.draw("extra", [self.list1])
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -248,6 +324,7 @@ class Game:
         pygame.mixer.music.play(-1)# parameter is how many loops you want, -1 is forever
 
         self.sfx['ambience'].play(-1)
+        pygame.mouse.set_visible(False)
 
         while self.running:
             self.dt = time.time() - self.start
@@ -332,6 +409,8 @@ class Game:
             if not self.dead:
                 self.player.update(self.tilemap, ((self.movement[1]- self.movement[0]), 0), self.keyboard) # movement left/right, no y axis   
                 self.player.render(self.display, offset = render_scroll)
+            
+            self.emojisManager.update(offset = render_scroll)
             
             # [(x, y), direction, timer]
             for projectile in self.projectiles.copy(): # use copy because we will remove them later
@@ -458,6 +537,27 @@ class Game:
                         else:
                             self.screen = pygame.display.set_mode((self.screenX, self.screenY))
                             self.list1.main = str(self.screenX) + "x" + str(self.screenY)
+                    #emojis
+                    if event.key == pygame.K_1:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 0)
+                    if event.key == pygame.K_2:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 5)
+                    if event.key == pygame.K_3:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 54)
+                    if event.key == pygame.K_4:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 14)
+                    if event.key == pygame.K_5:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 30)
+                    if event.key == pygame.K_6:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 40)
+                    if event.key == pygame.K_7:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 48)
+                    if event.key == pygame.K_8:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 58)
+                    if event.key == pygame.K_9:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 59)
+                    if event.key == pygame.K_0:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 60)
                 if event.type == pygame.KEYUP and self.keyboard:
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = False

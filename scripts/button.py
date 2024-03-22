@@ -56,10 +56,11 @@ class Button:
 				if self.pressed == True:
 					if nameType == 'game':
 						self.game.run()
+						pygame.mouse.set_visible(True)
 					elif nameType == 'option':
 						self.game.options()
-					elif nameType == 'resolution':
-						pass
+					elif nameType == 'extra':
+						self.game.extra()
 					elif nameType == 'controls':
 						pass
 					self.pressed = False

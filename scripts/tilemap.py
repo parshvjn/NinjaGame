@@ -1,5 +1,6 @@
 import pygame, json, math, random
 import scripts.cloth as cloth
+from scripts.extras import palette_swap
 
 AUTOTILE_MAP = { # rules of the autotiling
     tuple(sorted([(1,0), (0,1)])) : 0, #this says if neighbors are on the left and bottom meaning blocks below or on the left of hte placed tile then change the variant to 0. we make it sorted so that the order is always right, otherwise sometimes the order is different and it won't count as a case. we use tuple becasue we can't hold lists as keys in dicts
@@ -118,23 +119,44 @@ class Tilemap:
 
 
     def render(self, surf, offset=(0,0), editor = False):
-        for tile in self.offgrid_tiles:
-            # if tile
-            if tile['type'] == 'cloth' or tile['type'] == 'grass1':
-                if editor:
-                    surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1]))
+        if self.game.color =="Normal":
+            for tile in self.offgrid_tiles:
+                # if tile
+                if tile['type'] == 'cloth' or tile['type'] == 'grass1':
+                    if editor:
+                        surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1]))
+                    else:
+                        pass
                 else:
-                    pass
-            else:
-                surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1])) # we subtract positions by offset because we are trying to make a camera following the player but instead we move all objects to show the illusion. we use subtraction not addition because if you move right everything  moves left not right
+                    surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1])) # we subtract positions by offset because we are trying to make a camera following the player but instead we move all objects to show the illusion. we use subtraction not addition because if you move right everything  moves left not right
 
-        for x in range(offset[0] // self.tile_size, (offset[0]+ surf.get_width()) // self.tile_size + 1): #first paramter of range has the value of the x position of the top left tile in the screen, 2nd one is the right edge of screen
-            for y in range(offset[1] // self.tile_size, (offset[1]+ surf.get_height()) // self.tile_size + 1): #basicly these 2 lines are checking all tiles that we can see on the screen at the time
-                loc = str(x) + ';' + str(y) #getting the value of tile
-                if loc in self.tilemap: # check if tile value/pos in dict 
-                    tile = self.tilemap[loc] # getting all data for the tile like ex. if it is grass or what and more.
-                    surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0]*self.tile_size - offset[0], tile['pos'][1]*self.tile_size - offset[1])) #rendering the tile
-                #so the tiles only show if they are on the screen instead of always loading every tile in the world for optimization
+            for x in range(offset[0] // self.tile_size, (offset[0]+ surf.get_width()) // self.tile_size + 1): #first paramter of range has the value of the x position of the top left tile in the screen, 2nd one is the right edge of screen
+                for y in range(offset[1] // self.tile_size, (offset[1]+ surf.get_height()) // self.tile_size + 1): #basicly these 2 lines are checking all tiles that we can see on the screen at the time
+                    loc = str(x) + ';' + str(y) #getting the value of tile
+                    if loc in self.tilemap: # check if tile value/pos in dict 
+                        tile = self.tilemap[loc] # getting all data for the tile like ex. if it is grass or what and more.
+                        surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0]*self.tile_size - offset[0], tile['pos'][1]*self.tile_size - offset[1])) #rendering the tile
+                        #so the tiles only show if they are on the screen instead of always loading every tile in the world for optimization
+                        
+        elif self.game.color == "Color1":
+            for tile in self.offgrid_tiles:
+                if tile['type'] == 'cloth' or tile['type'] == 'grass1':
+                    if editor:
+                        surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1]))
+                    else:
+                        pass
+                else:
+                    if tile['type'] == 'large_decor' and tile['variant'] == 2:
+                        surf.blit(palette_swap(surf, (135,77,62), (17, 11, 96), self.game.assets[tile['type']][tile['variant']]), (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1]))
+                    else:
+                        surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1])) 
+
+            for x in range(offset[0] // self.tile_size, (offset[0]+ surf.get_width()) // self.tile_size + 1): 
+                for y in range(offset[1] // self.tile_size, (offset[1]+ surf.get_height()) // self.tile_size + 1):
+                    loc = str(x) + ';' + str(y) 
+                    if loc in self.tilemap: 
+                        tile = self.tilemap[loc]
+                        surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0]*self.tile_size - offset[0], tile['pos'][1]*self.tile_size - offset[1])) #rendering the tile
 
         # for loc in self.tilemap:
             # tile = self.tilemap[loc]
