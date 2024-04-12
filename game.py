@@ -13,6 +13,7 @@ import scripts.grass as grass
 from scripts.emoji import EmojiMain
 from scripts.button import Button
 from scripts.drop_down import DropDown
+from scripts.fireClass import FireManager
 
 class Game:
     def __init__(self):
@@ -111,7 +112,7 @@ class Game:
             [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
             10, 10, 80, 25, 
             self.font, 
-            "640x480", ["1920x1380", "1280x960", "640x480"], self)
+            "640x480", ["1920x1380", "1280x960", "640x480", "Custom"], self, [[4, [15, 35, 48, 25]], [4, [71, 35, 48, 25]]])
         self.list2 = DropDown(
             [COLOR_INACTIVE, COLOR_ACTIVE],
             [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
@@ -130,7 +131,8 @@ class Game:
         pygame.mouse.set_cursor(pygame.cursors.Cursor(*pygame.cursors.arrow))
 
         self.emojisManager = EmojiMain(self.assets['emojis'], self.display, self)
-
+        self.fire = FireManager(0, 0, self.display, False)
+        self.fireAttack = False
         
 
 
@@ -305,6 +307,12 @@ class Game:
                         self.screenX, self.screenY = 640, 480
                         self.screen = pygame.display.set_mode((self.screenX, self.screenY))
                         self.fullScreen = False
+                    else:
+                        sizes = self.list1.options[selectedOption].split("x")
+                        self.screenX, self.screenY = int(sizes[0]), int(sizes[1])
+                        self.screen = pygame.display.set_mode((self.screenX, self.screenY))
+                        self.fullScreen = False
+
                 
             # print(eventList)
             # selectedOption = self.list1.update(eventList)
@@ -321,7 +329,7 @@ class Game:
         self.running = True
         pygame.mixer.music.load('data/music.wav')
         pygame.mixer.music.set_volume(0.5)
-        pygame.mixer.music.play(-1)# parameter is how many loops you want, -1 is forever
+        pygame.mixer.music.play(-1)# parameter is how many loops you want, -1 is foreverx
 
         self.sfx['ambience'].play(-1)
         pygame.mouse.set_visible(False)
@@ -386,6 +394,7 @@ class Game:
 
             self.tilemap.render(self.display, offset = render_scroll)
 
+
             self.tilemap.render_grass(self.display, self.dt, self.t, render_scroll, gm= self.gm)
             
             self.gm.apply_force((self.player.pos[0], self.player.pos[1]), 5, 25)
@@ -405,6 +414,7 @@ class Game:
                 self.gm.apply_force((enemy.pos[0], enemy.pos[1]), 5, 25)
                 if kill:
                     self.enemies.remove(enemy)
+                    if not self.keyboard: self.joy.rumble(1, 1, 100)
 
             if not self.dead:
                 self.player.update(self.tilemap, ((self.movement[1]- self.movement[0]), 0), self.keyboard) # movement left/right, no y axis   
@@ -429,6 +439,7 @@ class Game:
                         self.projectiles.remove(projectile)
                         self.dead += 1
                         self.sfx['hit'].play()
+                        if not self.keyboard: self.joy.rumble(0, 1, 300)
                         self.screenShake = max(16, self.screenShake)
                         for i in range(30):
                             angle = random.random() * math.pi * 2
@@ -508,10 +519,12 @@ class Game:
                 if event.type == pygame.JOYDEVICEADDED:
                     self.joy = pygame.joystick.Joystick(event.device_index)
                     self.joysticks.append(self.joy)
+                    self.joy.rumble(1, 1, 100)
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.KEYDOWN and self.keyboard:
+                    # print(event.unicode)
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = True
                     if event.key == pygame.K_RIGHT:
@@ -558,12 +571,21 @@ class Game:
                         self.emojisManager.addOrRemoveEmoji(action = 1, index = 59)
                     if event.key == pygame.K_0:
                         self.emojisManager.addOrRemoveEmoji(action = 1, index = 60)
+                    if event.key == pygame.K_c:
+                        self.fireAttack = True
                 if event.type == pygame.KEYUP and self.keyboard:
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = False
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = False
+                    if event.key == pygame.K_c:
+                        self.fireAttack = False
             
+            if self.fireAttack and self.player.flip: self.fire.attack(0)
+            elif self.fireAttack and self.player.flip == False: self.fire.attack(1)
+            self.fire.update(self.player.pos[0]+300, self.player.pos[1]+250, wind = 0) # ! Fix the fire pos bug
+            print(self.player.pos)
+
             if self.transition:
                 transition_surf = pygame.Surface(self.display.get_size())
                 pygame.draw.circle(transition_surf, (255,255,255), (self.display.get_width()//2, self.display.get_height()//2), (30 - abs(self.transition)) * 8) # changin the value (30) will change speed of transition

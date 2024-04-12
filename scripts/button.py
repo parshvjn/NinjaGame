@@ -34,9 +34,9 @@ class Button:
 
 		for dropdown in dropdowns:
 			if dropdown.menu_open:
-				self.bottom_rect[1] += len(dropdown.options) * (dropdown.rect[3]+2)
-				self.top_rect[1] += len(dropdown.options) * (dropdown.rect[3]+2)
-				self.text_rect[1] += len(dropdown.options) * (dropdown.rect[3]+2)
+				self.bottom_rect[1] += len(dropdown.options) * (dropdown.rect[3]+2)+dropdown.extraPadding
+				self.top_rect[1] += len(dropdown.options) * (dropdown.rect[3]+2)+dropdown.extraPadding
+				self.text_rect[1] += len(dropdown.options) * (dropdown.rect[3]+2)+dropdown.extraPadding
 		pygame.draw.rect(self.display,self.bottom_color, self.bottom_rect,border_radius = 12)
 		pygame.draw.rect(self.display,self.top_color, self.top_rect,border_radius = 12)
 		self.display.blit(self.text_surf, self.text_rect)

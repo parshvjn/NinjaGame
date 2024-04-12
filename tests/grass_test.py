@@ -10,7 +10,7 @@ import scripts.grass as grass
 
 # set up pygame
 pygame.init()
-pygame.display.set_caption('grass demo')
+pygame.display.set_caption('grass test')
 
 screen = pygame.display.set_mode((600, 600), 0, 32)
 display = pygame.Surface((300, 300))
