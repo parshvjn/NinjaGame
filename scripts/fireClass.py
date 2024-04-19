@@ -42,10 +42,10 @@ class FireManager:
             self._x = self.pX+cos(a)*d
             self._y = self.pY+sin(a)*d
             if self.mp:
-                for _ in range(3): self.particles.append(Particle(self._x//self.res, self._y//self.res))
+                for _ in range(3): self.particles.append(Particle(self._x, self._y))
         else:
             if self.mp:
-                for _ in range(3): self.particles.append(Particle(self.pX//self.res, self.pY//self.res))
+                for _ in range(3): self.particles.append(Particle(self.pX, self.pY))
         
 
         self.mp = False
@@ -64,7 +64,6 @@ class FireManager:
         for p in self.particles:
             p.life -= 1
             if p.life == 0: self.dead.append(p); continue
-
             i = int((p.life/p.maxlife)*6)
 
             if self.up:
@@ -81,7 +80,6 @@ class FireManager:
             if not randint(0, 5): p.r += 0.88
 
             x, y = p.x, p.y
-
             x += p.ox*(5-i)
             y += p.oy*(5-i)
 

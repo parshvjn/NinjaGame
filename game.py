@@ -35,6 +35,7 @@ class Game:
         #so now with the line below you can use display instead of screen too
         self.display = pygame.Surface((320,240), pygame.SRCALPHA) # .surface() makes new black surface like window(like just a black img), scralpha tells the surface to add a transparency channel so it can be transparent
         self.display2 = pygame.Surface((320,240))
+        self.fireSurf = pygame.Surface((320,240), pygame.SRCALPHA)
          # display will be the one where we put outlines, so if you want ooutlines on something blit it in display if not then blit it in display2
 
         self.clock = pygame.time.Clock()
@@ -131,7 +132,7 @@ class Game:
         pygame.mouse.set_cursor(pygame.cursors.Cursor(*pygame.cursors.arrow))
 
         self.emojisManager = EmojiMain(self.assets['emojis'], self.display, self)
-        self.fire = FireManager(0, 0, self.display, False)
+        self.fire = FireManager(0, 0, self.fireSurf, False)
         self.fireAttack = False
         
 
@@ -338,6 +339,7 @@ class Game:
             self.dt = time.time() - self.start
             self.start = time.time()
             self.display.fill((0,0,0, 0))
+            self.fireSurf.fill((0,0,0,0))
             self.display2.blit(self.assets['background'], (0,0))
 
             self.screenShake = max(0, self.screenShake - 1)
@@ -581,10 +583,14 @@ class Game:
                     if event.key == pygame.K_c:
                         self.fireAttack = False
             
-            if self.fireAttack and self.player.flip: self.fire.attack(0)
-            elif self.fireAttack and self.player.flip == False: self.fire.attack(1)
-            self.fire.update(self.player.pos[0]+300, self.player.pos[1]+250, wind = 0) # ! Fix the fire pos bug
-            print(self.player.pos)
+
+            if self.transition ==0:
+                if self.fireAttack and self.player.flip and not self.player.dashing: self.fire.attack(0)
+                elif self.fireAttack and not self.player.flip and not self.player.dashing: self.fire.attack(1)
+                self.fire.update(self.player.pos[0] - render_scroll[0], self.player.pos[1] - render_scroll[1], wind = 0)
+            elif self.transition == 1:
+                self.fire.particles.clear()
+
 
             if self.transition:
                 transition_surf = pygame.Surface(self.display.get_size())
@@ -597,6 +603,8 @@ class Game:
 
             screenShakeOffset = (random.random() * self.screenShake - self.screenShake*2, random.random() * self.screenShake - self.screenShake*2)
             self.screen.blit(pygame.transform.scale(self.display2, self.screen.get_size()), screenShakeOffset) # displaying the surface which you put everything on, onto the original screen and scaling the surface to the scrren's size
+            self.fireSurf.set_colorkey((0,0,0))
+            self.screen.blit(pygame.transform.scale(self.fireSurf, self.screen.get_size()), screenShakeOffset)
             pygame.display.update()
             self.clock.tick(60)
 

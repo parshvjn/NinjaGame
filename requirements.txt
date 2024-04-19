@@ -1,0 +1,4 @@
+Pillow==10.3.0 # only for fireTest
+pygame==2.5.2
+pygame_emojis==0.1.1
+pygame_gui==0.6.9 # only for the colour picker for the fire pallete, rest of is just pygame 
