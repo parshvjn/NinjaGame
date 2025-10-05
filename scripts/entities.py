@@ -2,6 +2,7 @@ import pygame, math, random
 from scripts.particle import Particle
 from scripts.spark import Spark
 from scripts.tilemap import Tilemap
+from scripts.timer import Timer
 
 class PhysicsEntity:
     def __init__(self, game, e_type, pos, size): # asking for game so we can access the class game through this class too
@@ -27,7 +28,7 @@ class PhysicsEntity:
         if action != self.action: #only doing the rest if the action changed
             self.action = action
             # i accessed a class property from another file by saying self.fileName (in this case game)
-            self.animation = self.game.assets[self.type + '/' + self.action].copy() # making new instances of the animation
+            self.animation = self.game.assets[self.type + '/' + self.action].copy() # making new instances of the animatio
 
 
     def update(self, tilemap,movement =(0, 0)):
@@ -197,6 +198,9 @@ class Player(PhysicsEntity): #inheriting from PhysicsEntity
         self.jumps = 1
         self.wall_slide = False
         self.dashing = 0 # stores how much we want to dash and which direction
+        self.deathsPerLevel = 0
+        self.killsPerLevel = 0
+        self.killTimer = None
     
     def update(self, tilemap, movement = (0,0), keyboard = True):
         super().update(tilemap, movement = movement)
@@ -273,7 +277,7 @@ class Player(PhysicsEntity): #inheriting from PhysicsEntity
         
         # print(self.last_movement)
 
-    
+
     def render(self, surf, offset =(0,0)):
         if abs(self.dashing) <= 50: # if not in first 10 frames of dash
             super().render(surf, offset = offset) # using the render function of the class physicsentity above this class

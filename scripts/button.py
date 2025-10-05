@@ -11,7 +11,7 @@ class Button:
 		self.font = font
 		self.display = display
 		self.game = game
-
+		self.text = text
 
 		# top rectangle 
 		self.top_rect = pygame.Rect(pos,(width,height))
@@ -23,9 +23,13 @@ class Button:
 		#text
 		self.text_surf = self.font.render(text,True,'#FFFFFF')
 		self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)
+		self.game.dbs.append(self)
 
 	def draw(self, nameType = None, dropdowns = []):
 		# elevation logic 
+		self.text_surf = self.font.render(self.text,True,'#FFFFFF')
+		self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)
+
 		self.top_rect.y = self.original_y_pos - self.dynamic_elecation
 		self.text_rect.center = self.top_rect.center 
 

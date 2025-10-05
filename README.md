@@ -3,4 +3,4 @@ This is my game where there is a ninja that must go through level beating enemie
 -- Xbox controller Supported! (look at options/controls menu for all keybinds)
 -- More different features too like different color schemes!
 
--- IN PROGRESS --
+-- IN PROGRESS -- (The game is completed, although I'm adding more features)

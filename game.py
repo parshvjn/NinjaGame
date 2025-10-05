@@ -14,6 +14,8 @@ from scripts.emoji import EmojiMain
 from scripts.button import Button
 from scripts.drop_down import DropDown
 from scripts.fireClass import FireManager
+from scripts.hintSystem import hints
+from scripts.timer import Timer
 
 class Game:
     def __init__(self):
@@ -24,8 +26,9 @@ class Game:
         
         self.keyboard = True
 
-        self.font_size = 10
-        self.font = pygame.font.SysFont("Futura", self.font_size)
+        self.fonts = [["Futura", 10], ["data/fonts/AkayaTelivigala-Regular.ttf", 20], ["data/fonts/Atma-Light.ttf", 20], ["data/fonts/CaesarDressing-Regular.ttf", 20], ["data/fonts/CuteFont-Regular.ttf", 23]] # name : size
+        self.fontIndex = 0
+        self.font = pygame.font.Font(self.fonts[self.fontIndex][0], self.fonts[self.fontIndex][1]) if self.fontIndex else pygame.font.SysFont(self.fonts[self.fontIndex][0], self.fonts[self.fontIndex][1])
 
         self.monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
         self.screenX = 640
@@ -41,7 +44,7 @@ class Game:
         self.clock = pygame.time.Clock()
 
         self.joysticks = []
-
+        self.dbs = []
         # self.img = pygame.image.load("data/images/clouds/cloud_1.png")
         # self.img.set_colorkey((0,0,0)) #takes wherever the color is in the pic and makes it transparent
 
@@ -63,11 +66,11 @@ class Game:
             'player/jump': Animation(load_images('entities/player/jump')),
             'player/slide': Animation(load_images('entities/player/slide')),
             'player/wall_slide': Animation(load_images('entities/player/wall_slide')),
-            'particle/leaf': Animation(load_images('particles/leaf', scaleFactor=1.5), img_dur=20, loop = False),
+            'particle/leaf': Animation(load_images('particles/leaf', scaleFactor =1.5), img_dur=20, loop = False),
             'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop = False),
             'gun': load_image('gun.png'),
             'projectile': load_image('projectile.png'),
-            'emojis': load_images('emojis', scaleFactor=0.75)
+            'emojis': load_images('emojis', scaleFactor=0.85)
         }
 
         self.sfx = {
@@ -127,6 +130,12 @@ class Game:
             10, 40, 80, 25, 
             self.font,
             "Arrow", ["Arrow", "diamond", "broken_x", "thick arrow"], self)
+        self.fontDrop = DropDown(
+            [COLOR_INACTIVE, COLOR_ACTIVE],
+            [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
+            10, 70, 80, 25, 
+            self.font,
+            "1", ["1", "2", "3", "4", "5"], self)
         
         # pygame.mouse.set_visible(False)
         pygame.mouse.set_cursor(pygame.cursors.Cursor(*pygame.cursors.arrow))
@@ -134,12 +143,22 @@ class Game:
         self.emojisManager = EmojiMain(self.assets['emojis'], self.display, self)
         self.fire = FireManager(0, 0, self.fireSurf, False)
         self.fireAttack = False
+
+        #hint system
+        self.hintsS = hints(self.display2, [["Is the game too easy? Change the difficulty in the", " settings..."], ["Are you bored? Check out the extras setting for random", " fun!"], ["If having trouble on how to play, check out", "the tutorial"], ["Don't like the keys you press? Change them in the", " controls"], ["Don't want to play with keyboard? Connect your", "controller and play!"]], self)
         
 
 
-    def draw_text(self, text, font, text_col, x, y):
-        img = self.font.render(text, True, text_col)
-        self.display.blit(img, (x, y))
+    def draw_text(self, text, font, text_col, x, y, surf = False, hint = False):
+        if not hint:
+            img = self.font.render(text, True, text_col)
+        else:
+            self.fonthint = pygame.font.Font(self.fonts[self.fontIndex][0], 12 if self.fontIndex != 4 else 15) if self.fontIndex else pygame.font.SysFont(self.fonts[self.fontIndex][0], 10)
+            img = self.fonthint.render(text, True, text_col)
+            # print(True)
+            
+        if not surf: self.display.blit(img, (x, y))
+        else: surf.blit(img, (x, y))
 
     def load_map(self, map_id):
         self.tilemap.load('data/maps/' + str(map_id) + '.json')
@@ -185,6 +204,7 @@ class Game:
             self.clouds.render(self.display)
             self.button1.draw("game")
             self.button2.draw("option")
+            self.hintsS.update()
             # self.draw_text('main menu', self.font, (255, 255, 255), 20, 20)
 
             click = False
@@ -208,9 +228,10 @@ class Game:
                     if event.button == 1:
                         click = True
 
-
+            self.sparks.append(Spark(pygame.mouse.get_pos(), random.random() - 0.5, 2 + random.random())) # ! Add this
             self.display2.blit(self.display, (0,0)) # comment this for ninja mode :)
             screenShakeOffset = (random.random() * self.screenShake - self.screenShake*2, random.random() * self.screenShake - self.screenShake*2)
+            self.hintsS.render([10, self.display2.get_size()[1]-35])
             self.screen.blit(pygame.transform.scale(self.display2, self.screen.get_size()), screenShakeOffset) # displaying the surface which you put everything on, onto the original screen and scaling the surface to the scrren's size
             pygame.display.update()
             self.clock.tick(60)
@@ -255,7 +276,15 @@ class Game:
                     elif self.cursorDrop.options[selectedOption] == "thick arrow":
                         self.cursor = pygame.cursors.compile(pygame.cursors.thickarrow_strings)
                         pygame.mouse.set_cursor((24, 24), (0, 0), *self.cursor)
-                    
+                selectedOption = self.fontDrop.update(event, (self.screenX, self.screenY))
+                if selectedOption >= 0:
+                    self.fontDrop.main = self.fontDrop.options[selectedOption]
+                    self.fontIndex = int(self.fontDrop.main)-1
+                    self.font = pygame.font.Font(self.fonts[self.fontIndex][0], self.fonts[self.fontIndex][1]) if self.fontIndex else pygame.font.SysFont(self.fonts[self.fontIndex][0], self.fonts[self.fontIndex][1])
+                    for db in self.dbs:
+                        db.font = self.font
+                
+            self.fontDrop.draw(self.display, [self.list2, self.cursorDrop])
             self.list2.draw(self.display)
             self.cursorDrop.draw(self.display, [self.list2])
 
@@ -368,6 +397,8 @@ class Game:
                 if self.transition > 90:
                     self.level = min(self.level + 1, len(os.listdir('data/maps')) - 1)
                     self.load_map(self.level)
+                    self.player.deathsPerLevel = 0
+                    self.player.killsPerLevel = 0
             if self.transition < 0:
                 self.transition += 1
 
@@ -377,7 +408,12 @@ class Game:
                     self.transition = min(90, self.transition + 1)
                 if self.dead > 40:
                     self.load_map(self.level)
-            
+                    self.player.deathsPerLevel += 1
+                    self.player.killsPerLevel = 0
+                    if self.player.deathsPerLevel >= 2:
+                        self.emojisManager.addOrRemoveEmoji(action = 1, index = 58)
+                
+            # print(self.player.killsPerLevel)
             #line below basicly checks how far away the camera is from what we want it to be and adds it to scroll
             self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0])/30 # normally if you put camera on player pos then player will be on top left but want it in the middle
             self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1])/30
@@ -415,8 +451,18 @@ class Game:
                 enemy.render(self.display, offset = render_scroll)
                 self.gm.apply_force((enemy.pos[0], enemy.pos[1]), 5, 25)
                 if kill:
+                    self.player.killsPerLevel += 1
+                    self.player.killTimer = Timer(3)
                     self.enemies.remove(enemy)
                     if not self.keyboard: self.joy.rumble(1, 1, 100)
+
+            if self.player.killsPerLevel >0:
+                if self.player.killTimer.count():
+                    self.player.killsPerLevel = 0
+                    self.player.killTimer = None
+
+            if self.player.killsPerLevel >= 5:
+                self.emojisManager.addOrRemoveEmoji(action = 1, index = 60)
 
             if not self.dead:
                 self.player.update(self.tilemap, ((self.movement[1]- self.movement[0]), 0), self.keyboard) # movement left/right, no y axis   
@@ -449,7 +495,8 @@ class Game:
                             self.sparks.append(Spark(self.player.rect().center, angle, 2 + random.random()))
                             self.particles.append(Particle(self, 'particle', self.player.rect().center, velocity = [math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame = random.randint(0,7)))
 
-            self.draw_text("FPS: " + str(round(self.clock.get_fps(), 2)), self.font, pygame.Color("azure"), 10, 20)
+            self.draw_text("FPS: " + str(round(self.clock.get_fps(), 2)), self.font, pygame.Color("azure"), 10, 10 + self.fonts[self.fontIndex][1])
+            self.draw_text('Combo: ' + str(self.player.killsPerLevel), self.font, pygame.Color("azure"), 10, 25 + self.fonts[self.fontIndex][1])
 
             for spark in self.sparks.copy():
                 kill = spark.update()
@@ -583,11 +630,11 @@ class Game:
                     if event.key == pygame.K_c:
                         self.fireAttack = False
             
-
+            
             if self.transition ==0:
-                if self.fireAttack and self.player.flip and not self.player.dashing: self.fire.attack(0)
+                if self.fireAttack and self.player.flip and not self.player.dashing: self.fire.attack(0); 
                 elif self.fireAttack and not self.player.flip and not self.player.dashing: self.fire.attack(1)
-                self.fire.update(self.player.pos[0] - render_scroll[0], self.player.pos[1] - render_scroll[1], wind = 0)
+                self.fire.update(self.player.pos[0] - render_scroll[0] + (self.assets['player'].get_width() if not self.player.flip else 0), self.player.pos[1] - render_scroll[1] + (self.assets['player'].get_height()/2), wind = 0)
             elif self.transition == 1:
                 self.fire.particles.clear()
 
@@ -601,7 +648,9 @@ class Game:
             
             self.display2.blit(self.display, (0,0)) # comment this for ninja mode :)
 
+
             screenShakeOffset = (random.random() * self.screenShake - self.screenShake*2, random.random() * self.screenShake - self.screenShake*2)
+            # print(screenShakeOffset)
             self.screen.blit(pygame.transform.scale(self.display2, self.screen.get_size()), screenShakeOffset) # displaying the surface which you put everything on, onto the original screen and scaling the surface to the scrren's size
             self.fireSurf.set_colorkey((0,0,0))
             self.screen.blit(pygame.transform.scale(self.fireSurf, self.screen.get_size()), screenShakeOffset)

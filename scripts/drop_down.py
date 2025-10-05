@@ -28,6 +28,7 @@ class DropDown():
         if textInputIndexList != []:
             for item in textInputIndexList:
                 self.tInputs.append(tInput((0,0,0), (255,255,255), item[1][0], item[1][1], item[1][2], item[1][3], self.game.display, item[0], self.game, self.h, item[1][3]))
+        self.game.dbs.append(self)
                 
 
 
@@ -78,7 +79,7 @@ class DropDown():
                         pos114 = msg.get_rect(center = rect.center)
                         pos113[0] += self.w
                         pos114[0] += self.w
-                        pos114[1]+= self.game.font_size
+                        pos114[1]+= self.game.fonts[self.game.fontIndex][1]
                         surf.blit(self.font.render("Hover Over a size you made and", 1, (0, 0, 0)), pos113)
                         surf.blit(self.font.render(" click d to remove (not defualt ones)", 1, (0, 0, 0)), pos114)
             for input in self.tInputs:

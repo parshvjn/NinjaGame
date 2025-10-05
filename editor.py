@@ -4,7 +4,7 @@ from scripts.tilemap import Tilemap
 
 RENDER_SCALE = 4.0 #multiplier for pixel
 
-path = 'data/maps/0.json'
+path = 'test.json'
 
 class Editor:
     def __init__(self):
